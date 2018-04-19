@@ -14,9 +14,13 @@
 /** 占位标签 */
 @property (nonatomic, strong) UILabel *holderLb;
 
+/** 是否有编辑过 */
+@property (nonatomic, assign, getter=isHasEdit) BOOL hasEdit;
+
 @end
 
 static const CGFloat kHolderFS = 30.0;
+NSString *const kHolderDefault = @"请输入纸条内容";
 
 @implementation SCTextView
 
@@ -27,6 +31,11 @@ static const CGFloat kHolderFS = 30.0;
 }
 
 #pragma mark - setter
+- (void)setHasEdit:(BOOL)hasEdit {
+    _hasEdit = hasEdit;
+    self.holderLb.hidden = hasEdit;
+}
+
 - (void)setHolderString:(NSString *)holderString {
     _holderString = holderString;
     // 设置占位标签
@@ -37,23 +46,26 @@ static const CGFloat kHolderFS = 30.0;
 #pragma mark - init
 - (instancetype)initWithFrame:(CGRect)frame {
     if (self == [super initWithFrame:frame]) {
-        [self setup];
+        [self setupUI];
         [self debug];
     }
     return self;
 }
 
 #pragma mark - setup
-- (void)setup {
-    self.text = @"请输入纸条内容";
+- (void)setupUI {
     self.font = [UIFont systemFontOfSize:kHolderFS];
     self.scrollEnabled = NO;
     self.delegate = self;
     [self changeTextViewHeight];
+    
+    // 插入占位标签
+    [self addSubview:self.holderLb];
 }
 
 #pragma mark - UITextViewDelegate
 -(void)textViewDidChange:(UITextView *)textView{
+    self.hasEdit = YES;
     [self changeTextViewHeight];
 }
 
@@ -72,9 +84,11 @@ static const CGFloat kHolderFS = 30.0;
 #pragma mark - lazy
 - (UILabel *)holderLb {
     if (_holderLb == nil) {
-        _holderLb = [[UILabel alloc] initWithFrame:CGRectZero];
+        _holderLb = [[UILabel alloc] initWithFrame:CGRectMake(5, 8, 0, 0)];
         _holderLb.font = [UIFont systemFontOfSize:kHolderFS];
         _holderLb.textColor = [UIColor colorWithWhite:0.8 alpha:1.0];
+        _holderLb.text = kHolderDefault;
+        [_holderLb sizeToFit];
     }
     return _holderLb;
 }
