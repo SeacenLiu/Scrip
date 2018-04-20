@@ -10,6 +10,7 @@
 
 @interface SCPasterView : UIImageView
 
+@property (nonatomic, copy) NSString *text;
 @property (assign, nonatomic) CGSize      minSize;
 @property (assign, nonatomic) CGFloat     minFontSize;
 @property (retain, nonatomic) UIFont      *curFont;

@@ -60,87 +60,29 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 @end
 
 static const CGFloat kIconSize = 24;
-static const CGFloat kMaxFontSize = 500;
+static const CGFloat kMaxFontSize = 100;
 
 @implementation SCPasterView
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {}
 
-#pragma mark - init 124.5
+#pragma mark - init
 - (instancetype)initWithFrame:(CGRect)frame text:(NSString*)text {
     if (self == [super initWithFrame:frame]) {
-        // 图片初始化设置
-        self.userInteractionEnabled = YES;
-        self.backgroundColor = [UIColor lightGrayColor];
-        self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
         // 设置属性初始值
+        self.text = text;
         UIFont * font = [UIFont systemFontOfSize:14];
         self.curFont = font;
         self.minFontSize = font.pointSize;
-        self.minSize = CGSizeMake(60, 60 * frame.size.height/frame.size.width);
+        self.minSize = CGSizeMake(0.5 * frame.size.width, 0.5 * frame.size.height);
+        NSLog(@"%f, %f", self.minSize.width, self.minSize.height);
         // debug
         self.layer.borderColor = [UIColor blueColor].CGColor;
         self.layer.borderWidth = 1;
-        // 添加文本框
-        [self addSubview:self.textView];
-        [self sendSubviewToBack:self.textView];
-        
-        // 添加删除按钮
-        [self addSubview:self.deleteControl];
-        [_deleteControl addTarget:self action:@selector(deleteClick) forControlEvents:UIControlEventTouchUpInside];
-        _deleteControl.frame = CGRectMake(0, 0, kIconSize, kIconSize);
-        _deleteControl.hidden = YES;
-        
-        // 添加旋转按钮
-        [self addSubview:self.rotateControl];
-        _rotateControl.frame = CGRectMake(self.w-kIconSize, 0, kIconSize, kIconSize);
-        _rotateControl.hidden = YES;
-        
-        // 添加缩放按钮
-        [self addSubview:self.scaleControl];
-        _scaleControl.frame = CGRectMake(self.w-kIconSize, self.h-kIconSize, kIconSize, kIconSize);
-        _scaleControl.hidden = YES;
-        
-        // 添加点击手势
-        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureAction:)];
-        [self addGestureRecognizer:tap];
-        
-        // 添加拖拽移动手势
-        [self addGestureRecognizer:self.moveGesture];
-        self.moveGesture.delegate = self;
-        
-        // 添加放大手势
-        UIPanGestureRecognizer *scalePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(scaleGestureAction:)];
-        [self.scaleControl addGestureRecognizer:scalePan];
-        
-        // 添加旋转手势
-        UIPanGestureRecognizer *rotatePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(rotateGestureAction:)];
-        [self.rotateControl addGestureRecognizer:rotatePan];
-        
-        // 添加文本框
-        [self addSubview:self.textView];
-        [self sendSubviewToBack:_textView];
-        [self layoutSubViewWithFrame: frame];
-        
-        // 设置文本框
-        CGFloat cFont = 1;
-        self.textView.text = text;
-        self.minSize = CGSizeMake(kIconSize, kIconSize);
-        if (self.minSize.height >  frame.size.height ||
-            self.minSize.width  >  frame.size.width  ||
-            self.minSize.height <= 0 || self.minSize.width <= 0)
-        {
-            self.minSize = CGSizeMake(frame.size.width/3.f, frame.size.height/3.f);
-        }
-        CGSize tSize = [self textSizeWithFont:cFont text:[text length]?nil:@"点击输入内容"];
-        do {
-            tSize = [self textSizeWithFont:++cFont text:[text length]?nil:@"点击输入内容"];
-        }
-        while (![self isBeyondSize:tSize] && cFont < kMaxFontSize);
-        if (cFont < /*self.minFontSize*/0)return nil;
-        cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
-        [self.textView setFont:[self.curFont fontWithSize:--cFont]];
-        [self centerTextVertically];
+        self.textView.layer.borderColor = [UIColor redColor].CGColor;
+        self.textView.layer.borderWidth = 1;
+        // 设置界面
+        [self setupUI];
     }
     return self;
 }
@@ -159,6 +101,7 @@ static const CGFloat kMaxFontSize = 500;
 }
 
 #pragma mark - gesture
+/// 旋转
 - (void)rotateGestureAction:(UIPanGestureRecognizer*)recognizer {
     CGPoint center = CGRectGetCenter(self.frame);
     if ([recognizer state] == UIGestureRecognizerStateBegan) {
@@ -177,6 +120,7 @@ static const CGFloat kMaxFontSize = 500;
     }
 }
 
+/// 缩放
 - (void)scaleGestureAction:(UIPanGestureRecognizer*)recognizer {
     touchLocation = [recognizer locationInView:self.superview];
     if ([recognizer state] == UIGestureRecognizerStateBegan) {
@@ -209,6 +153,7 @@ static const CGFloat kMaxFontSize = 500;
                 wChange = change;
                 hChange = change;
             }
+            [self changeTextFont:wChange > 0];
             self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
                                      self.bounds.size.width + (wChange),
                                      self.bounds.size.height + (hChange));
@@ -218,10 +163,7 @@ static const CGFloat kMaxFontSize = 500;
     }
 }
 
-- (void)tapGestureAction:(UITapGestureRecognizer*)recognizer {
-    self.select = !self.isSelect;
-}
-
+// 平移
 - (void)moveGestureAction:(UIPanGestureRecognizer*)recognizer {
     touchLocation = [recognizer locationInView:self.superview];
     if (recognizer.state == UIGestureRecognizerStateBegan) {
@@ -237,6 +179,17 @@ static const CGFloat kMaxFontSize = 500;
     prevPoint = touchLocation;
 }
 
+// 单击
+- (void)tapGestureAction:(UITapGestureRecognizer*)recognizer {
+    self.select = !self.isSelect;
+    [self.textView resignFirstResponder];
+}
+
+// 双击
+- (void)doubleTapGestureAction:(UITapGestureRecognizer*)recognizer {
+    [self.textView becomeFirstResponder];
+}
+
 #pragma mark - setter
 - (void)setSelect:(BOOL)select {
     _select = select;
@@ -247,9 +200,106 @@ static const CGFloat kMaxFontSize = 500;
 }
 
 #pragma mark - setup
+- (void)setupUI {
+    // 图片初始化设置
+    self.userInteractionEnabled = YES;
+    self.backgroundColor = [UIColor lightGrayColor];
+    self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
+    
+    // 添加文本框
+    [self addSubview:self.textView];
+    [self sendSubviewToBack:self.textView];
+    
+    // 添加删除按钮
+    [self addSubview:self.deleteControl];
+    [_deleteControl addTarget:self action:@selector(deleteClick) forControlEvents:UIControlEventTouchUpInside];
+    _deleteControl.frame = CGRectMake(0, 0, kIconSize, kIconSize);
+    _deleteControl.hidden = YES;
+    
+    // 添加旋转按钮
+    [self addSubview:self.rotateControl];
+    _rotateControl.frame = CGRectMake(self.w-kIconSize, 0, kIconSize, kIconSize);
+    _rotateControl.hidden = YES;
+    
+    // 添加缩放按钮
+    [self addSubview:self.scaleControl];
+    _scaleControl.frame = CGRectMake(self.w-kIconSize, self.h-kIconSize, kIconSize, kIconSize);
+    _scaleControl.hidden = YES;
+    
+    // 添加文本框
+    [self addSubview:self.textView];
+    [self sendSubviewToBack:_textView];
+    [self layoutSubViewWithFrame: self.frame];
+    
+    // 设置文本框
+    CGFloat cFont = 1;
+    self.textView.text = _text;
+    if (self.minSize.height >  self.frame.size.height ||
+        self.minSize.width  >  self.frame.size.width  ||
+        self.minSize.height <= 0 || self.minSize.width <= 0)
+    {
+        self.minSize = CGSizeMake(self.frame.size.width/3.f, self.frame.size.height/3.f);
+    }
+    CGSize tSize = [self textSizeWithFont:cFont text:[_text length]?nil:@"双击编辑文字"];
+    do {
+        tSize = [self textSizeWithFont:++cFont text:[_text length]?nil:@"双击编辑文字"];
+    }
+    while (![self isBeyondSize:tSize] && cFont < kMaxFontSize);
+//    if (cFont < /*self.minFontSize*/0)return nil; // 原本在init中的
+    cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
+    [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+    [self centerTextVertically];
+    
+    // 添加手势
+    [self addGestureRecognizers];
+}
 
+- (void)addGestureRecognizers {
+    // 添加点击手势
+    UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapGestureAction:)];
+    [self addGestureRecognizer:tap];
+    
+    // 添加拖拽移动手势
+    [self addGestureRecognizer:self.moveGesture];
+    self.moveGesture.delegate = self;
+    
+    // 添加放大手势
+    UIPanGestureRecognizer *scalePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(scaleGestureAction:)];
+    [self.scaleControl addGestureRecognizer:scalePan];
+    
+    // 添加旋转手势
+    UIPanGestureRecognizer *rotatePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(rotateGestureAction:)];
+    [self.rotateControl addGestureRecognizer:rotatePan];
+    
+    // 添加双击手势
+    UITapGestureRecognizer *doubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapGestureAction:)];
+    doubleTap.numberOfTapsRequired = 2;
+    [self addGestureRecognizer:doubleTap];
+}
 
 #pragma mark - tool
+- (void)changeTextFont:(BOOL)isIncrease {
+    self.textView.textContainerInset = UIEdgeInsetsZero;
+    if ([self.textView.text length]) {
+        CGFloat cFont = self.textView.font.pointSize;
+        CGSize  tSize = [self textSizeWithFont:cFont text:nil];
+        if (isIncrease) {
+            do {
+                tSize = [self textSizeWithFont:++cFont text:nil];
+            }
+            while (![self isBeyondSize:tSize] && cFont < kIconSize);
+            cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
+            [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+        } else {
+            while ([self isBeyondSize:tSize] && cFont > 0) {
+                tSize = [self textSizeWithFont:--cFont text:nil];
+            }
+            [self.textView setFont:[self.curFont fontWithSize:cFont]];
+        }
+    }
+    [self centerTextVertically];
+}
+
 - (BOOL)isBeyondSize:(CGSize)size {
     CGFloat ost = _textView.textContainerInset.top + _textView.textContainerInset.bottom;
     return size.height + ost > self.textView.frame.size.height;
@@ -335,6 +385,7 @@ static const CGFloat kMaxFontSize = 500;
 - (UITextView *)textView {
     if (_textView == nil) {
         _textView = [[UITextView alloc] initWithFrame:CGRectZero];
+        _textView.userInteractionEnabled = NO;
         _textView.scrollEnabled = NO;
         _textView.delegate = self;
         _textView.keyboardType  = UIKeyboardTypeASCIICapable;
