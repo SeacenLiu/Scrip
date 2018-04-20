@@ -9,8 +9,6 @@
 #import "SCPasterView.h"
 #import "UIView+UIViewScrip.h"
 
-#define MAX_FONT_SIZE 500
-
 CG_INLINE CGPoint CGRectGetCenter(CGRect rect) {
     return CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
 }
@@ -42,19 +40,6 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 
     CGFloat deltaAngle;
 }
-//@property (nonatomic, assign) CGPoint prevPoint;
-//@property (nonatomic, assign) CGPoint touchLocation;
-//
-//@property (nonatomic, assign) CGPoint beginningPoint;
-//@property (nonatomic, assign) CGPoint beginningCenter;
-//
-//@property (nonatomic, assign) CGRect beginBounds;
-//
-//@property (nonatomic, assign) CGRect initialBounds;
-//@property (nonatomic, assign) CGFloat initialDistance;
-//
-//@property (nonatomic, assign) CGFloat deltaAngle;
-
 /** 删除按钮 */
 @property (nonatomic, strong) UIButton *deleteControl;
 /** 旋转图片 */
@@ -69,28 +54,30 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 
 @property (nonatomic, assign) BOOL isDeleting;
 
+/** 是否被选中 */
 @property (nonatomic, assign, getter=isSelect) BOOL select;
 
 @end
 
 static const CGFloat kIconSize = 24;
+static const CGFloat kMaxFontSize = 500;
 
 @implementation SCPasterView
 
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {}
 
 #pragma mark - init 124.5
-- (instancetype)initWithOrigin:(CGPoint)origin size:(CGSize)size text:(NSString*)text {
-    if (self == [super initWithFrame:CGRectMake(origin.x, origin.y, size.width, size.height)]) {
+- (instancetype)initWithFrame:(CGRect)frame text:(NSString*)text {
+    if (self == [super initWithFrame:frame]) {
         // 图片初始化设置
         self.userInteractionEnabled = YES;
         self.backgroundColor = [UIColor lightGrayColor];
-        self.image = [UIImage imageNamed:@"bubble_graph_1.bmp"];
+        self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
         // 设置属性初始值
         UIFont * font = [UIFont systemFontOfSize:14];
         self.curFont = font;
         self.minFontSize = font.pointSize;
-        self.minSize = CGSizeMake(60, 60 * size.height/size.width);
+        self.minSize = CGSizeMake(60, 60 * frame.size.height/frame.size.width);
         // debug
         self.layer.borderColor = [UIColor blueColor].CGColor;
         self.layer.borderWidth = 1;
@@ -129,6 +116,31 @@ static const CGFloat kIconSize = 24;
         // 添加旋转手势
         UIPanGestureRecognizer *rotatePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(rotateGestureAction:)];
         [self.rotateControl addGestureRecognizer:rotatePan];
+        
+        // 添加文本框
+        [self addSubview:self.textView];
+        [self sendSubviewToBack:_textView];
+        [self layoutSubViewWithFrame: frame];
+        
+        // 设置文本框
+        CGFloat cFont = 1;
+        self.textView.text = text;
+        self.minSize = CGSizeMake(kIconSize, kIconSize);
+        if (self.minSize.height >  frame.size.height ||
+            self.minSize.width  >  frame.size.width  ||
+            self.minSize.height <= 0 || self.minSize.width <= 0)
+        {
+            self.minSize = CGSizeMake(frame.size.width/3.f, frame.size.height/3.f);
+        }
+        CGSize tSize = [self textSizeWithFont:cFont text:[text length]?nil:@"点击输入内容"];
+        do {
+            tSize = [self textSizeWithFont:++cFont text:[text length]?nil:@"点击输入内容"];
+        }
+        while (![self isBeyondSize:tSize] && cFont < kMaxFontSize);
+        if (cFont < /*self.minFontSize*/0)return nil;
+        cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
+        [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+        [self centerTextVertically];
     }
     return self;
 }
@@ -238,7 +250,44 @@ static const CGFloat kIconSize = 24;
 
 
 #pragma mark - tool
+- (BOOL)isBeyondSize:(CGSize)size {
+    CGFloat ost = _textView.textContainerInset.top + _textView.textContainerInset.bottom;
+    return size.height + ost > self.textView.frame.size.height;
+}
+
+- (CGSize)textSizeWithFont:(CGFloat)font text:(NSString *)string {
+    NSString *text = string ? string : self.textView.text;
+    
+    CGFloat pO = self.textView.textContainer.lineFragmentPadding * 2;
+    CGFloat cW = self.textView.frame.size.width - pO;
+    
+    CGRect tR = [text boundingRectWithSize:CGSizeMake(cW, MAXFLOAT)
+                                   options:NSStringDrawingUsesLineFragmentOrigin
+                                attributes:@{NSFontAttributeName: [self.curFont fontWithSize:font]} context:nil];
+    return tR.size;
+}
+
+- (void)centerTextVertically {
+    CGSize  tH     = [self textSizeWithFont:self.textView.font.pointSize text:nil];
+    CGFloat offset = (self.textView.frame.size.height - tH.height)/2.f;
+    
+    self.textView.textContainerInset = UIEdgeInsetsMake(offset, 0, offset, 0);
+    
+//#if TEST_CENTER_ALIGNMENT
+//    [self.indicatorView setFrame:CGRectMake(0, offset, self.frame.size.width, tH.height)];
+//#else
+//    // ...
+//#endif
+}
+
 - (void)layoutSubViewWithFrame:(CGRect)frame {
+    // 计算文本框位置
+    CGRect tRect = frame;
+    tRect.size.width = self.bounds.size.width * 0.73;
+    tRect.size.height = self.bounds.size.height * 0.46;
+    tRect.origin.x = (self.bounds.size.width - tRect.size.width) * 0.5;
+    tRect.origin.y = self.bounds.size.height * 0.18;
+    [self.textView setFrame:tRect];
     // 计算删除按钮的位置
     [self.deleteControl setFrame:CGRectMake(0, 0,kIconSize, kIconSize)];
     // 计算缩放按钮的位置

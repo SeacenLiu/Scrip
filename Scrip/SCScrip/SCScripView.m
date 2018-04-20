@@ -29,7 +29,8 @@ static const CGFloat kScripH = 10000;
 #pragma mark - touch
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     CGPoint point = [[touches anyObject] locationInView:self.contentView];
-    SCPasterView *paster = [[SCPasterView alloc] initWithOrigin:point size:CGSizeMake(124.5, 100) text:@"请输入文字"];
+    CGRect rect = CGRectMake(point.x, point.y, 124.5, 100);
+    SCPasterView *paster = [[SCPasterView alloc] initWithFrame:rect text:@"请输入文字"];
     [self.contentView addSubview:paster];
 }
 

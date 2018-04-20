@@ -16,6 +16,6 @@
 
 //- (instancetype)initWithOrigin:(CGPoint)origin text:(NSString*)text;
 
-- (instancetype)initWithOrigin:(CGPoint)origin size:(CGSize)size text:(NSString*)text;
+- (instancetype)initWithFrame:(CGRect)frame text:(NSString*)text;
 
 @end
