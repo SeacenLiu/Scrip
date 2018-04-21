@@ -34,6 +34,8 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 /** 文本框 */
 @property (nonatomic, strong) UITextView *textView;
 
+@property (nonatomic, strong) UILabel *label;
+
 /** 拖拽手势--用于移动贴图 */
 @property (nonatomic, strong) UIPanGestureRecognizer *moveGesture;
 
@@ -131,12 +133,12 @@ static const CGFloat kMaxFontSize = 500;
                 wChange = change;
                 hChange = change;
             }
-            [self layoutSubViewWithFrame:self.bounds];
             self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
                                      self.bounds.size.width + wChange,
                                      self.bounds.size.height + hChange);
-            prevPoint = [recognizer locationInView:self];
+            [self layoutSubViewWithFrame:self.bounds];
             [self changeTextFontWithisIncrease:wChange > 0];
+            prevPoint = [recognizer locationInView:self];
         }
     } else if (recognizer.state == UIGestureRecognizerStateEnded) {
         [self layoutSubViewWithFrame:self.bounds];
@@ -180,15 +182,11 @@ static const CGFloat kMaxFontSize = 500;
     return YES;
 }
 
-- (void)textViewDidChange:(UITextView *)textView
-{
+- (void)textViewDidChange:(UITextView *)textView {
     NSString *calcStr = textView.text;
-    
     self.textView.textContainerInset = UIEdgeInsetsZero;
-    [self changeTextFontWithisIncrease:_isDeleting];
-    
-    [self centerTextVertically];
     [self.textView setText:calcStr];
+    [self changeTextFontWithisIncrease:_isDeleting];
 }
 
 #pragma mark - setter
@@ -202,10 +200,6 @@ static const CGFloat kMaxFontSize = 500;
 
 #pragma mark - setup
 - (void)setupUI {
-    // 添加文本框
-    [self addSubview:self.textView];
-    [self sendSubviewToBack:self.textView];
-    
     // 添加删除按钮
     [self addSubview:self.deleteControl];
     [_deleteControl addTarget:self action:@selector(deleteClick) forControlEvents:UIControlEventTouchUpInside];
@@ -226,7 +220,7 @@ static const CGFloat kMaxFontSize = 500;
     [self addSubview:self.textView];
     [self sendSubviewToBack:_textView];
     [self layoutSubViewWithFrame: self.frame];
-    
+
     // 设置文本框
     self.textView.text = _text;
     self.textView.font = [UIFont systemFontOfSize:1.0];
@@ -386,7 +380,6 @@ static const CGFloat kMaxFontSize = 500;
         [_textView setText:nil]; [_textView setFont:nil];
         [_textView setAutocorrectionType:UITextAutocorrectionTypeNo];
         _textView.textContainerInset = UIEdgeInsetsZero;
-//        _textView.layoutManager.allowsNonContiguousLayout = NO;
         [_textView textContainer].lineBreakMode = NSLineBreakByCharWrapping;
     }
     return _textView;
