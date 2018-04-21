@@ -17,7 +17,6 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
     return atan2(t.b, t.a);
 }
 
-
 @interface SCPasterView() <UITextViewDelegate>
 {
     CGPoint prevPoint;
