@@ -13,31 +13,17 @@ CG_INLINE CGPoint CGRectGetCenter(CGRect rect) {
     return CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
 }
 
-CG_INLINE CGFloat CGPointGetDistance(CGPoint point1, CGPoint point2) {
-    //Saving Variables.
-    CGFloat fx = (point2.x - point1.x);
-    CGFloat fy = (point2.y - point1.y);
-    return sqrt((fx*fx + fy*fy));
-}
-
 CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
     return atan2(t.b, t.a);
 }
 
 
-@interface SCPasterView() <UITextViewDelegate, UIGestureRecognizerDelegate>
+@interface SCPasterView() <UITextViewDelegate>
 {
     CGPoint prevPoint;
     CGPoint touchLocation;
-
     CGPoint beginningPoint;
     CGPoint beginningCenter;
-
-    CGRect beginBounds;
-
-    CGRect initialBounds;
-    CGFloat initialDistance;
-
     CGFloat deltaAngle;
 }
 /** 删除按钮 */
@@ -60,7 +46,7 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 @end
 
 static const CGFloat kIconSize = 24;
-static const CGFloat kMaxFontSize = 100;
+static const CGFloat kMaxFontSize = 500;
 
 @implementation SCPasterView
 
@@ -75,12 +61,14 @@ static const CGFloat kMaxFontSize = 100;
         self.curFont = font;
         self.minFontSize = font.pointSize;
         self.minSize = CGSizeMake(0.5 * frame.size.width, 0.5 * frame.size.height);
-        NSLog(@"%f, %f", self.minSize.width, self.minSize.height);
         // debug
         self.layer.borderColor = [UIColor blueColor].CGColor;
         self.layer.borderWidth = 1;
         self.textView.layer.borderColor = [UIColor redColor].CGColor;
         self.textView.layer.borderWidth = 1;
+        self.userInteractionEnabled = YES;
+        self.backgroundColor = [UIColor lightGrayColor];
+        self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
         // 设置界面
         [self setupUI];
     }
@@ -93,13 +81,6 @@ static const CGFloat kMaxFontSize = 100;
     [self removeFromSuperview];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
-    if (touch.view == self.rotateControl || touch.view == self.scaleControl) {
-        return NO;
-    }
-    return YES;
-}
-
 #pragma mark - gesture
 /// 旋转
 - (void)rotateGestureAction:(UIPanGestureRecognizer*)recognizer {
@@ -108,8 +89,6 @@ static const CGFloat kMaxFontSize = 100;
         touchLocation = [recognizer locationInView:self.superview];
         //求出反正切角
         deltaAngle = atan2(touchLocation.y-center.y, touchLocation.x-center.x)-CGAffineTransformGetAngle(self.transform);
-        initialBounds = self.bounds;
-        initialDistance = CGPointGetDistance(self.center, touchLocation);
     } else if ([recognizer state] == UIGestureRecognizerStateChanged) {
         CGPoint point = [recognizer locationInView:self.superview];
         float ang = atan2(point.y - self.center.y, point.x - self.center.x);
@@ -153,13 +132,15 @@ static const CGFloat kMaxFontSize = 100;
                 wChange = change;
                 hChange = change;
             }
-            [self changeTextFont:wChange > 0];
-            self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
-                                     self.bounds.size.width + (wChange),
-                                     self.bounds.size.height + (hChange));
             [self layoutSubViewWithFrame:self.bounds];
+            self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
+                                     self.bounds.size.width + wChange,
+                                     self.bounds.size.height + hChange);
             prevPoint = [recognizer locationInView:self];
+            [self changeTextFontWithisIncrease:wChange > 0];
         }
+    } else if (recognizer.state == UIGestureRecognizerStateEnded) {
+        [self layoutSubViewWithFrame:self.bounds];
     }
 }
 
@@ -170,7 +151,6 @@ static const CGFloat kMaxFontSize = 100;
         beginningPoint = touchLocation;
         beginningCenter = self.center;
         [self setCenter:CGPointMake(beginningCenter.x+(touchLocation.x-beginningPoint.x), beginningCenter.y+(touchLocation.y-beginningPoint.y))];
-        beginBounds = self.bounds;
     } else if (recognizer.state == UIGestureRecognizerStateChanged) {
         [self setCenter:CGPointMake(beginningCenter.x+(touchLocation.x-beginningPoint.x), beginningCenter.y+(touchLocation.y-beginningPoint.y))];
     } else if (recognizer.state == UIGestureRecognizerStateEnded) {
@@ -190,6 +170,28 @@ static const CGFloat kMaxFontSize = 100;
     [self.textView becomeFirstResponder];
 }
 
+#pragma mark - text view delegate
+- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if ([text isEqualToString:@"\n"]) {
+        [self endEditing:YES];
+        return NO;
+    }
+    _isDeleting = (range.length >= 1 && text.length == 0);
+    if (textView.font.pointSize <= self.minFontSize && !_isDeleting) return NO;
+    return YES;
+}
+
+- (void)textViewDidChange:(UITextView *)textView
+{
+    NSString *calcStr = textView.text;
+    
+    self.textView.textContainerInset = UIEdgeInsetsZero;
+    [self changeTextFontWithisIncrease:_isDeleting];
+    
+    [self centerTextVertically];
+    [self.textView setText:calcStr];
+}
+
 #pragma mark - setter
 - (void)setSelect:(BOOL)select {
     _select = select;
@@ -201,11 +203,6 @@ static const CGFloat kMaxFontSize = 100;
 
 #pragma mark - setup
 - (void)setupUI {
-    // 图片初始化设置
-    self.userInteractionEnabled = YES;
-    self.backgroundColor = [UIColor lightGrayColor];
-    self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
-    
     // 添加文本框
     [self addSubview:self.textView];
     [self sendSubviewToBack:self.textView];
@@ -232,22 +229,15 @@ static const CGFloat kMaxFontSize = 100;
     [self layoutSubViewWithFrame: self.frame];
     
     // 设置文本框
-    CGFloat cFont = 1;
     self.textView.text = _text;
+    self.textView.font = [UIFont systemFontOfSize:1.0];
     if (self.minSize.height >  self.frame.size.height ||
         self.minSize.width  >  self.frame.size.width  ||
         self.minSize.height <= 0 || self.minSize.width <= 0)
     {
         self.minSize = CGSizeMake(self.frame.size.width/3.f, self.frame.size.height/3.f);
     }
-    CGSize tSize = [self textSizeWithFont:cFont text:[_text length]?nil:@"双击编辑文字"];
-    do {
-        tSize = [self textSizeWithFont:++cFont text:[_text length]?nil:@"双击编辑文字"];
-    }
-    while (![self isBeyondSize:tSize] && cFont < kMaxFontSize);
-//    if (cFont < /*self.minFontSize*/0)return nil; // 原本在init中的
-    cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
-    [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+    [self changeTextFontWithisIncrease:YES];
     [self centerTextVertically];
     
     // 添加手势
@@ -261,7 +251,6 @@ static const CGFloat kMaxFontSize = 100;
     
     // 添加拖拽移动手势
     [self addGestureRecognizer:self.moveGesture];
-    self.moveGesture.delegate = self;
     
     // 添加放大手势
     UIPanGestureRecognizer *scalePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(scaleGestureAction:)];
@@ -278,23 +267,32 @@ static const CGFloat kMaxFontSize = 100;
 }
 
 #pragma mark - tool
-- (void)changeTextFont:(BOOL)isIncrease {
+- (void)smallTextFont {
+    CGFloat cFont = self.textView.font.pointSize;
+    CGSize  tSize = [self textSizeWithFont:cFont text:nil];
+    while ([self isBeyondSize:tSize] && cFont > 0) {
+        tSize = [self textSizeWithFont:--cFont text:nil];
+    }
+    [self.textView setFont:[self.curFont fontWithSize:cFont]];
+}
+
+- (void)biggerTextFont {
+    CGFloat cFont = self.textView.font.pointSize;
+    CGSize  tSize = [self textSizeWithFont:cFont text:nil];
+    while (![self isBeyondSize:tSize] && cFont < kMaxFontSize) {
+        tSize = [self textSizeWithFont:++cFont text:nil];
+    }
+    cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
+    [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+}
+
+- (void)changeTextFontWithisIncrease:(BOOL)isIncrease {
     self.textView.textContainerInset = UIEdgeInsetsZero;
     if ([self.textView.text length]) {
-        CGFloat cFont = self.textView.font.pointSize;
-        CGSize  tSize = [self textSizeWithFont:cFont text:nil];
         if (isIncrease) {
-            do {
-                tSize = [self textSizeWithFont:++cFont text:nil];
-            }
-            while (![self isBeyondSize:tSize] && cFont < kIconSize);
-            cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
-            [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+            [self biggerTextFont];
         } else {
-            while ([self isBeyondSize:tSize] && cFont > 0) {
-                tSize = [self textSizeWithFont:--cFont text:nil];
-            }
-            [self.textView setFont:[self.curFont fontWithSize:cFont]];
+            [self smallTextFont];
         }
     }
     [self centerTextVertically];
@@ -320,14 +318,7 @@ static const CGFloat kMaxFontSize = 100;
 - (void)centerTextVertically {
     CGSize  tH     = [self textSizeWithFont:self.textView.font.pointSize text:nil];
     CGFloat offset = (self.textView.frame.size.height - tH.height)/2.f;
-    
     self.textView.textContainerInset = UIEdgeInsetsMake(offset, 0, offset, 0);
-    
-//#if TEST_CENTER_ALIGNMENT
-//    [self.indicatorView setFrame:CGRectMake(0, offset, self.frame.size.width, tH.height)];
-//#else
-//    // ...
-//#endif
 }
 
 - (void)layoutSubViewWithFrame:(CGRect)frame {
@@ -391,11 +382,13 @@ static const CGFloat kMaxFontSize = 100;
         _textView.keyboardType  = UIKeyboardTypeASCIICapable;
         _textView.returnKeyType = UIReturnKeyDone;
         _textView.textAlignment = NSTextAlignmentCenter;
-        [_textView setBackgroundColor:[UIColor whiteColor]];
+        [_textView setBackgroundColor:[UIColor clearColor]];
         [_textView setTextColor:[UIColor redColor]];
         [_textView setText:nil]; [_textView setFont:nil];
         [_textView setAutocorrectionType:UITextAutocorrectionTypeNo];
         _textView.textContainerInset = UIEdgeInsetsZero;
+//        _textView.layoutManager.allowsNonContiguousLayout = NO;
+        [_textView textContainer].lineBreakMode = NSLineBreakByCharWrapping;
     }
     return _textView;
 }
