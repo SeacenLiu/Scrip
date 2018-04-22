@@ -8,7 +8,6 @@
 
 #import "SCPasterView.h"
 #import "UIView+UIViewScrip.h"
-#import "SCDisplayView.h"
 
 CG_INLINE CGPoint CGRectGetCenter(CGRect rect) {
     return CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
@@ -34,9 +33,6 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 @property (nonatomic, strong) UIImageView *scaleControl;
 /** 文本框 */
 @property (nonatomic, strong) UITextView *textView;
-
-@property (nonatomic, strong) SCDisplayView *displayView;
-@property (nonatomic, strong) UILabel *label;
 
 /** 拖拽手势--用于移动贴图 */
 @property (nonatomic, strong) UIPanGestureRecognizer *moveGesture;
@@ -198,7 +194,6 @@ static const CGFloat kMaxFontSize = 500;
 #pragma mark - setter
 - (void)setText:(NSString *)text {
     _text = text;
-    self.displayView.text = text;
 }
 
 - (void)setSelect:(BOOL)select {

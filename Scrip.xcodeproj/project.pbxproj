@@ -16,7 +16,6 @@
 		142329862088A5310045B6D7 /* SCPasterView.m in Sources */ = {isa = PBXBuildFile; fileRef = 142329852088A5310045B6D7 /* SCPasterView.m */; };
 		142329892088AD960045B6D7 /* bubble.png in Resources */ = {isa = PBXBuildFile; fileRef = 142329882088AD960045B6D7 /* bubble.png */; };
 		1423298B2088DF560045B6D7 /* bubble_graph_1.bmp in Resources */ = {isa = PBXBuildFile; fileRef = 1423298A2088DF560045B6D7 /* bubble_graph_1.bmp */; };
-		145F39DD208B69C9001087A9 /* SCDisplayView.m in Sources */ = {isa = PBXBuildFile; fileRef = 145F39DC208B69C9001087A9 /* SCDisplayView.m */; };
 		14ABB34E2088416A00A624B5 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ABB34D2088416A00A624B5 /* AppDelegate.m */; };
 		14ABB3562088416A00A624B5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 14ABB3552088416A00A624B5 /* Assets.xcassets */; };
 		14ABB35C2088416A00A624B5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 14ABB35B2088416A00A624B5 /* main.m */; };
@@ -37,8 +36,6 @@
 		142329852088A5310045B6D7 /* SCPasterView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SCPasterView.m; sourceTree = "<group>"; };
 		142329882088AD960045B6D7 /* bubble.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bubble.png; sourceTree = "<group>"; };
 		1423298A2088DF560045B6D7 /* bubble_graph_1.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = bubble_graph_1.bmp; sourceTree = "<group>"; };
-		145F39DB208B69C9001087A9 /* SCDisplayView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SCDisplayView.h; sourceTree = "<group>"; };
-		145F39DC208B69C9001087A9 /* SCDisplayView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SCDisplayView.m; sourceTree = "<group>"; };
 		14ABB3492088416A00A624B5 /* Scrip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scrip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		14ABB34C2088416A00A624B5 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		14ABB34D2088416A00A624B5 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -71,8 +68,6 @@
 				14232975208842640045B6D7 /* UIView+UIViewScrip.m */,
 				142329842088A5310045B6D7 /* SCPasterView.h */,
 				142329852088A5310045B6D7 /* SCPasterView.m */,
-				145F39DB208B69C9001087A9 /* SCDisplayView.h */,
-				145F39DC208B69C9001087A9 /* SCDisplayView.m */,
 			);
 			path = SCScrip;
 			sourceTree = "<group>";
@@ -184,7 +179,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				14232977208842640045B6D7 /* SCTextView.m in Sources */,
-				145F39DD208B69C9001087A9 /* SCDisplayView.m in Sources */,
 				14ABB35C2088416A00A624B5 /* main.m in Sources */,
 				14ABB34E2088416A00A624B5 /* AppDelegate.m in Sources */,
 				14232978208842640045B6D7 /* UIView+UIViewScrip.m in Sources */,
