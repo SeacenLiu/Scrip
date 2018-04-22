@@ -17,7 +17,6 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
     return atan2(t.b, t.a);
 }
 
-
 @interface SCPasterView() <UITextViewDelegate>
 {
     CGPoint prevPoint;
@@ -60,7 +59,7 @@ static const CGFloat kMaxFontSize = 500;
         UIFont * font = [UIFont systemFontOfSize:14];
         self.curFont = font;
         self.minFontSize = font.pointSize;
-        self.minSize = CGSizeMake(0.5 * frame.size.width, 0.5 * frame.size.height);
+        self.minSize = CGSizeMake(0.1 * frame.size.width, 0.1 * frame.size.height);
         // debug
         self.layer.borderColor = [UIColor blueColor].CGColor;
         self.layer.borderWidth = 1;
@@ -132,12 +131,16 @@ static const CGFloat kMaxFontSize = 500;
                 wChange = change;
                 hChange = change;
             }
-            [self layoutSubViewWithFrame:self.bounds];
+            // 控制缩放比例
+            CGFloat scale = self.bounds.size.width / self.bounds.size.height;
+            wChange = scale * hChange;
+            
             self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
                                      self.bounds.size.width + wChange,
                                      self.bounds.size.height + hChange);
-            prevPoint = [recognizer locationInView:self];
+            [self layoutSubViewWithFrame:self.bounds];
             [self changeTextFontWithisIncrease:wChange > 0];
+            prevPoint = [recognizer locationInView:self];
         }
     } else if (recognizer.state == UIGestureRecognizerStateEnded) {
         [self layoutSubViewWithFrame:self.bounds];
@@ -181,18 +184,18 @@ static const CGFloat kMaxFontSize = 500;
     return YES;
 }
 
-- (void)textViewDidChange:(UITextView *)textView
-{
+- (void)textViewDidChange:(UITextView *)textView {
     NSString *calcStr = textView.text;
-    
     self.textView.textContainerInset = UIEdgeInsetsZero;
-    [self changeTextFontWithisIncrease:_isDeleting];
-    
-    [self centerTextVertically];
     [self.textView setText:calcStr];
+    [self changeTextFontWithisIncrease:_isDeleting];
 }
 
 #pragma mark - setter
+- (void)setText:(NSString *)text {
+    _text = text;
+}
+
 - (void)setSelect:(BOOL)select {
     _select = select;
     self.deleteControl.hidden = !select;
@@ -203,10 +206,6 @@ static const CGFloat kMaxFontSize = 500;
 
 #pragma mark - setup
 - (void)setupUI {
-    // 添加文本框
-    [self addSubview:self.textView];
-    [self sendSubviewToBack:self.textView];
-    
     // 添加删除按钮
     [self addSubview:self.deleteControl];
     [_deleteControl addTarget:self action:@selector(deleteClick) forControlEvents:UIControlEventTouchUpInside];
@@ -227,7 +226,7 @@ static const CGFloat kMaxFontSize = 500;
     [self addSubview:self.textView];
     [self sendSubviewToBack:_textView];
     [self layoutSubViewWithFrame: self.frame];
-    
+
     // 设置文本框
     self.textView.text = _text;
     self.textView.font = [UIFont systemFontOfSize:1.0];
@@ -238,7 +237,6 @@ static const CGFloat kMaxFontSize = 500;
         self.minSize = CGSizeMake(self.frame.size.width/3.f, self.frame.size.height/3.f);
     }
     [self changeTextFontWithisIncrease:YES];
-    [self centerTextVertically];
     
     // 添加手势
     [self addGestureRecognizers];
@@ -271,7 +269,8 @@ static const CGFloat kMaxFontSize = 500;
     CGFloat cFont = self.textView.font.pointSize;
     CGSize  tSize = [self textSizeWithFont:cFont text:nil];
     while ([self isBeyondSize:tSize] && cFont > 0) {
-        tSize = [self textSizeWithFont:--cFont text:nil];
+        cFont -= 0.1;
+        tSize = [self textSizeWithFont:cFont text:nil];
     }
     [self.textView setFont:[self.curFont fontWithSize:cFont]];
 }
@@ -280,10 +279,12 @@ static const CGFloat kMaxFontSize = 500;
     CGFloat cFont = self.textView.font.pointSize;
     CGSize  tSize = [self textSizeWithFont:cFont text:nil];
     while (![self isBeyondSize:tSize] && cFont < kMaxFontSize) {
-        tSize = [self textSizeWithFont:++cFont text:nil];
+        cFont += 0.1;
+        tSize = [self textSizeWithFont:cFont text:nil];
     }
     cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
-    [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+    cFont -= 0.1;
+    [self.textView setFont:[self.curFont fontWithSize:cFont]];
 }
 
 - (void)changeTextFontWithisIncrease:(BOOL)isIncrease {
@@ -387,7 +388,6 @@ static const CGFloat kMaxFontSize = 500;
         [_textView setText:nil]; [_textView setFont:nil];
         [_textView setAutocorrectionType:UITextAutocorrectionTypeNo];
         _textView.textContainerInset = UIEdgeInsetsZero;
-//        _textView.layoutManager.allowsNonContiguousLayout = NO;
         [_textView textContainer].lineBreakMode = NSLineBreakByCharWrapping;
     }
     return _textView;
