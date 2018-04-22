@@ -44,7 +44,7 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 
 @end
 
-static const CGFloat kIconSize = 24;
+static const CGFloat kIconSize = 30;
 static const CGFloat kMaxFontSize = 500;
 
 @implementation SCPasterView
