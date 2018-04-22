@@ -10,10 +10,10 @@
 
 @interface SCScripView : UIScrollView
 
-//@property (nonatomic, assign)
-
 - (instancetype)initWithFrame:(CGRect)frame;
 
 - (void)testChangeFont:(UIFont*)font;
+
+- (void)testAddPaster;
 
 @end

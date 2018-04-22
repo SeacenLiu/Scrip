@@ -10,4 +10,6 @@
 
 @interface SCDisplayView : UIView
 
+@property (nonatomic, copy) NSString *text;
+
 @end

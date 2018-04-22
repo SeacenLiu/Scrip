@@ -18,6 +18,10 @@
 
 @implementation ViewController
 
+- (IBAction)addPaster:(id)sender {
+    [self.scrollView testAddPaster];
+}
+
 - (IBAction)sliderValueChange:(UISlider *)sender {
     [self.scrollView testChangeFont:[UIFont systemFontOfSize:sender.value]];
 }

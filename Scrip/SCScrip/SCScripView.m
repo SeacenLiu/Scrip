@@ -26,12 +26,24 @@ static const CGFloat kScripH = 10000;
     self.mainTextView.font = font;
 }
 
-#pragma mark - touch
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    CGPoint point = [[touches anyObject] locationInView:self.contentView];
-    CGRect rect = CGRectMake(point.x, point.y, 124.5, 100);
+#pragma mark - method
+- (void)testAddPaster {
+    CGFloat offsetY = self.contentOffset.y;
+    CGFloat y = offsetY + 40;
+    CGFloat w = self.screenW - 40;
+    CGFloat h = w * 10 / 13;
+    CGFloat x = (self.screenW - w) * 0.5;
+    CGRect rect = CGRectMake(x, y, w, h);
     SCPasterView *paster = [[SCPasterView alloc] initWithFrame:rect text:@"双击编辑文字"];
     [self.contentView addSubview:paster];
+}
+
+#pragma mark - touch
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+//    CGPoint point = [[touches anyObject] locationInView:self.contentView];
+//    CGRect rect = CGRectMake(point.x, point.y, 124.5, 100);
+//    SCPasterView *paster = [[SCPasterView alloc] initWithFrame:rect text:@"双击编辑文字"];
+//    [self.contentView addSubview:paster];
 }
 
 #pragma mark - init

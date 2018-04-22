@@ -28,12 +28,21 @@
                                     <action selector="sliderValueChange:" destination="BYZ-38-t0r" eventType="valueChanged" id="Bcn-3r-du7"/>
                                 </connections>
                             </slider>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="wjD-dE-Na2">
+                                <rect key="frame" x="156" y="621" width="62" height="30"/>
+                                <state key="normal" title="添加贴纸"/>
+                                <connections>
+                                    <action selector="addPaster:" destination="BYZ-38-t0r" eventType="touchUpInside" id="oZc-Vt-1QI"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="wjD-dE-Na2" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="5Gk-ux-ahY"/>
                             <constraint firstItem="Bg9-wv-ORK" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="Cwg-iu-rmR"/>
                             <constraint firstItem="Bg9-wv-ORK" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="I3H-f9-sSb"/>
                             <constraint firstItem="Bg9-wv-ORK" firstAttribute="top" secondItem="cxb-Vo-7TA" secondAttribute="bottom" id="Obk-JH-tw2"/>
+                            <constraint firstItem="GHv-rt-c7m" firstAttribute="top" secondItem="wjD-dE-Na2" secondAttribute="bottom" constant="16" id="vDr-4C-6qF"/>
                         </constraints>
                     </view>
                     <connections>

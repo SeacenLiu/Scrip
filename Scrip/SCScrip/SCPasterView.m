@@ -36,6 +36,7 @@ CG_INLINE CGFloat CGAffineTransformGetAngle(CGAffineTransform t) {
 @property (nonatomic, strong) UITextView *textView;
 
 @property (nonatomic, strong) SCDisplayView *displayView;
+@property (nonatomic, strong) UILabel *label;
 
 /** 拖拽手势--用于移动贴图 */
 @property (nonatomic, strong) UIPanGestureRecognizer *moveGesture;
@@ -62,7 +63,7 @@ static const CGFloat kMaxFontSize = 500;
         UIFont * font = [UIFont systemFontOfSize:14];
         self.curFont = font;
         self.minFontSize = font.pointSize;
-        self.minSize = CGSizeMake(0.5 * frame.size.width, 0.5 * frame.size.height);
+        self.minSize = CGSizeMake(0.1 * frame.size.width, 0.1 * frame.size.height);
         // debug
         self.layer.borderColor = [UIColor blueColor].CGColor;
         self.layer.borderWidth = 1;
@@ -73,15 +74,6 @@ static const CGFloat kMaxFontSize = 500;
         self.image = [UIImage imageNamed:@"bubble"]; // bubble_graph_1.bmp
         // 设置界面
         [self setupUI];
-        
-        CGRect tRect = frame;
-        tRect.size.width = self.bounds.size.width * 0.73;
-        tRect.size.height = self.bounds.size.height * 0.46;
-        tRect.origin.x = (self.bounds.size.width - tRect.size.width) * 0.5;
-        tRect.origin.y = self.bounds.size.height * 0.18;
-        self.displayView = [[SCDisplayView alloc] initWithFrame:tRect];
-        self.displayView.backgroundColor = [UIColor whiteColor];
-        [self addSubview:self.displayView];
     }
     return self;
 }
@@ -143,26 +135,13 @@ static const CGFloat kMaxFontSize = 500;
                 wChange = change;
                 hChange = change;
             }
+            // 控制缩放比例
+            CGFloat scale = self.bounds.size.width / self.bounds.size.height;
+            wChange = scale * hChange;
+            
             self.bounds = CGRectMake(self.bounds.origin.x, self.bounds.origin.y,
                                      self.bounds.size.width + wChange,
                                      self.bounds.size.height + hChange);
-            
-            CGFloat scaleW = self.displayView.bounds.size.width / self.bounds.size.width;
-            CGFloat scaleH = self.displayView.bounds.size.height / self.bounds.size.height;
-            
-//            CGPoint bigCenter = CGRectGetCenter(self.bounds);
-//            CGPoint smallCenter = self.displayView.center;
-//            CGFloat scaleX = bigCenter.x / smallCenter.x;
-//            CGFloat scaleY = bigCenter.y / smallCenter.y;
-
-            self.displayView.bounds = CGRectMake(self.displayView.bounds.origin.x, self.displayView.bounds.origin.y,
-                                          self.displayView.bounds.size.width + wChange * scaleW,
-                                          self.displayView.bounds.size.height + hChange * scaleH);
-            CGPoint newCenter = CGRectGetCenter(self.bounds);
-//            newCenter.x = newCenter.x * scaleX;
-//            newCenter.y = newCenter.y * scaleY;
-            self.displayView.center = newCenter;
-            
             [self layoutSubViewWithFrame:self.bounds];
             [self changeTextFontWithisIncrease:wChange > 0];
             prevPoint = [recognizer locationInView:self];
@@ -217,6 +196,11 @@ static const CGFloat kMaxFontSize = 500;
 }
 
 #pragma mark - setter
+- (void)setText:(NSString *)text {
+    _text = text;
+    self.displayView.text = text;
+}
+
 - (void)setSelect:(BOOL)select {
     _select = select;
     self.deleteControl.hidden = !select;
@@ -244,20 +228,20 @@ static const CGFloat kMaxFontSize = 500;
     _scaleControl.hidden = YES;
     
     // 添加文本框
-//    [self addSubview:self.textView];
-//    [self sendSubviewToBack:_textView];
-//    [self layoutSubViewWithFrame: self.frame];
+    [self addSubview:self.textView];
+    [self sendSubviewToBack:_textView];
+    [self layoutSubViewWithFrame: self.frame];
 
     // 设置文本框
-//    self.textView.text = _text;
-//    self.textView.font = [UIFont systemFontOfSize:1.0];
-//    if (self.minSize.height >  self.frame.size.height ||
-//        self.minSize.width  >  self.frame.size.width  ||
-//        self.minSize.height <= 0 || self.minSize.width <= 0)
-//    {
-//        self.minSize = CGSizeMake(self.frame.size.width/3.f, self.frame.size.height/3.f);
-//    }
-//    [self changeTextFontWithisIncrease:YES];
+    self.textView.text = _text;
+    self.textView.font = [UIFont systemFontOfSize:1.0];
+    if (self.minSize.height >  self.frame.size.height ||
+        self.minSize.width  >  self.frame.size.width  ||
+        self.minSize.height <= 0 || self.minSize.width <= 0)
+    {
+        self.minSize = CGSizeMake(self.frame.size.width/3.f, self.frame.size.height/3.f);
+    }
+    [self changeTextFontWithisIncrease:YES];
     
     // 添加手势
     [self addGestureRecognizers];
@@ -290,7 +274,8 @@ static const CGFloat kMaxFontSize = 500;
     CGFloat cFont = self.textView.font.pointSize;
     CGSize  tSize = [self textSizeWithFont:cFont text:nil];
     while ([self isBeyondSize:tSize] && cFont > 0) {
-        tSize = [self textSizeWithFont:--cFont text:nil];
+        cFont -= 0.1;
+        tSize = [self textSizeWithFont:cFont text:nil];
     }
     [self.textView setFont:[self.curFont fontWithSize:cFont]];
 }
@@ -299,10 +284,12 @@ static const CGFloat kMaxFontSize = 500;
     CGFloat cFont = self.textView.font.pointSize;
     CGSize  tSize = [self textSizeWithFont:cFont text:nil];
     while (![self isBeyondSize:tSize] && cFont < kMaxFontSize) {
-        tSize = [self textSizeWithFont:++cFont text:nil];
+        cFont += 0.1;
+        tSize = [self textSizeWithFont:cFont text:nil];
     }
     cFont = (cFont < kMaxFontSize) ? cFont : self.minFontSize;
-    [self.textView setFont:[self.curFont fontWithSize:--cFont]];
+    cFont -= 0.1;
+    [self.textView setFont:[self.curFont fontWithSize:cFont]];
 }
 
 - (void)changeTextFontWithisIncrease:(BOOL)isIncrease {
